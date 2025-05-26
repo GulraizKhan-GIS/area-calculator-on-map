@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-JW7498D2XX"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-JW7498D2XX');
+</script>
+    <title>Area Acreage Calculator Map Free    </title>
+    <meta charset="utf-8" />
+    <meta name="description" content="Calculate Area on Map by drawing polygon on map this acreage calculator map gives area in acres, square miles, square km, square meters, square yards and square feet.">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .empty-top {
+            height: 2vh;
+        }
+        
+        .empty-bottom {
+            height: 2vh;
+        }
+        
+        .search-container {
+            padding: 10px;
+            display: flex;
+            gap: 5px;
+        }
+        
+        .search-container input {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        
+        .search-container button {
+            padding: 8px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .tools-container {
+            padding: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        
+        .tools-container button, .tools-container input {
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            cursor: pointer;
+            background-color: white;
+        }
+        
+        .tools-container button:hover {
+            background-color: #f0f0f0;
+        }
+        
+        .summary-container {
+            padding: 10px;
+            background-color: #f8f8f8;
+            border-top: 1px solid #ddd;
+            border-bottom: 1px solid #ddd;
+            font-size: 14px;
+        }
+        
+        #map {
+            flex: 1;
+            width: 100%;
+        }
+        
+        @media (max-width: 600px) {
+            .tools-container button, .tools-container input {
+                padding: 6px 8px;
+                font-size: 12px;
+            }
+            
+            .summary-container {
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="empty-top"></div>
+    
+    <div class="search-container">
+        <input type="text" id="search-input" placeholder="Enter address or postal code">
+        <button id="search-button">Search</button>
+    </div>
+    
+    <div class="tools-container">
+        <button id="draw-polygon">Draw Polygon</button>
+        <input type="color" id="polygon-color" value="#3388ff">
+        <button id="clear-all">Clear All</button>
+        <button id="downloadmap">Download Polygon (GeoJSON)</button>
+        <button id="current-location">Current Location</button>
+    </div>
+    
+    <div class="summary-container" id="summary-area">
+        Area: Not calculated
+    </div>
+    
+    <div id="map"></div>
+    
+    <div class="empty-bottom"></div>
+    
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Leaflet.draw plugin -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
+    
+    <script>
+        // Initialize the map
+        const map = L.map('map').setView([40.715, -74.000], 13);
+        
+        // Add tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+        
+        // Variables for drawing
+        let drawnItems = new L.FeatureGroup();
+        map.addLayer(drawnItems);
+        let drawControl;
+        
+        // Initialize draw control
+        function initDrawControl() {
+            drawControl = new L.Control.Draw({
+                draw: {
+                    polygon: {
+                        shapeOptions: {
+                            color: document.getElementById('polygon-color').value,
+                            fillOpacity: 0.6
+                        },
+                        allowIntersection: false,
+                        showArea: true
+                    },
+                    polyline: false,
+                    rectangle: false,
+                    circle: false,
+                    marker: false,
+                    circlemarker: false
+                },
+                edit: {
+                    featureGroup: drawnItems
+                }
+            });
+            map.addControl(drawControl);
+        }
+        
+        // Calculate area in different units
+        function calculateArea(layer) {
+            const area = L.GeometryUtil.geodesicArea(layer.getLatLngs()[0]);
+            const sqMeters = area;
+            const sqKm = area / 1000000;
+            const sqMiles = area / 2589988.11;
+            const sqFeet = area * 10.764;
+            const sqYards = area * 1.196;
+            const acres = area*0.000247105;
+            
+            return {
+                sqMeters: sqMeters.toFixed(2),
+                sqKm: sqKm.toFixed(6),
+                sqMiles: sqMiles.toFixed(6),
+                sqFeet: sqFeet.toFixed(2),
+                sqYards: sqYards.toFixed(2),
+                acres: acres.toFixed(2)
+            };
+        }
+        
+        // Update summary
+        function updateSummary(layer) {
+            const area = calculateArea(layer);
+            document.getElementById('summary-area').innerHTML = `
+                Area: ${area.acres} Acres | ${area.sqMiles} sq mi | ${area.sqKm} sq km | ${area.sqMeters} sq m | 
+                ${area.sqFeet} sq ft | ${area.sqYards} sq yd
+            `;
+        }
+        
+        // Function to download GeoJSON
+        function downloadGeoJSON() {
+            if (drawnItems.getLayers().length === 0) {
+                alert("No polygons to download. Please draw a polygon first.");
+                return;
+            }
+            
+            const originalText = downloadmap.textContent;
+            downloadmap.disabled = true;
+            downloadmap.textContent = 'Generating...';
+            
+            try {
+                // Convert drawn items to GeoJSON
+                const geoJSON = drawnItems.toGeoJSON();
+                
+                // Create a download link
+                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(geoJSON, null, 2));
+                const link = document.createElement('a');
+                link.download = 'polygon-' + new Date().toISOString().slice(0, 10) + '.geojson';
+                link.href = dataStr;
+                link.click();
+                
+            } catch (error) {
+                console.error('Error generating GeoJSON:', error);
+                alert('Error generating GeoJSON file');
+            } finally {
+                downloadmap.disabled = false;
+                downloadmap.textContent = originalText;
+            }
+        }
+        
+        // Event listeners
+        document.getElementById('draw-polygon').addEventListener('click', function() {
+            if (drawControl) {
+                map.removeControl(drawControl);
+            }
+            initDrawControl();
+            new L.Draw.Polygon(map, drawControl.options.draw.polygon).enable();
+        });
+        
+        document.getElementById('polygon-color').addEventListener('change', function() {
+            if (drawControl) {
+                map.removeControl(drawControl);
+                initDrawControl();
+            }
+        });
+        
+        document.getElementById('clear-all').addEventListener('click', function() {
+            drawnItems.clearLayers();
+            document.getElementById('summary-area').textContent = 'Area: Not calculated';
+        });
+        
+        document.getElementById('downloadmap').addEventListener('click', downloadGeoJSON);
+        
+        document.getElementById('current-location').addEventListener('click', function() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    map.setView([position.coords.latitude, position.coords.longitude], 15);
+                }, function() {
+                    alert('Could not get your location');
+                });
+            } else {
+                alert('Geolocation is not supported by your browser');
+            }
+        });
+        
+        document.getElementById('search-button').addEventListener('click', function() {
+            const query = document.getElementById('search-input').value;
+            if (query.trim() === '') return;
+            
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.length > 0) {
+                        const lat = parseFloat(data[0].lat);
+                        const lon = parseFloat(data[0].lon);
+                        map.setView([lat, lon], 15);
+                    } else {
+                        alert('Location not found');
+                    }
+                })
+                .catch(() => {
+                    alert('Error searching for location');
+                });
+        });
+        
+        // Handle Enter key in search
+        document.getElementById('search-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                document.getElementById('search-button').click();
+            }
+        });
+        
+        // Map events
+        map.on(L.Draw.Event.CREATED, function(e) {
+            const layer = e.layer;
+            layer.setStyle({
+                fillOpacity: 0.6,
+                color: document.getElementById('polygon-color').value
+            });
+            drawnItems.addLayer(layer);
+            updateSummary(layer);
+        });
+        
+        map.on(L.Draw.Event.EDITED, function(e) {
+            const layers = e.layers;
+            layers.eachLayer(function(layer) {
+                updateSummary(layer);
+            });
+        });
+        
+        // Initialize
+        initDrawControl();
+    </script>
+</body>
+</html>
