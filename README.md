@@ -1,7 +1,7 @@
 # area-calculator-on-map
 Land Area Calculator Map – Find the land area of a shape you draw on a free online map
 Square Footage Calculator on Map https://onlinemapmaker.com/Free-Mapping-Tools/draw-on-map-measure-area/ is a free opensource web tool.
-Area calculator – Find the area of a shape you draw on free opensource webmap with Openstreet Maps.
+Area calculator – Find the area of a shape you draw on free opensource webmap with Openstreet Maps. Tutorial and information about the tool. https://onlinemapmaker.com/land-area-calculator-map-find-the-land-area-of-a-shape-you-draw-on-a-free-online-map/
 
 This free webgis tools allows you to calculate area of your desired location on web map using upto date OSM data in variety of units.
 
